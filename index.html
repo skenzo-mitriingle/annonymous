@@ -113,7 +113,7 @@ function App() {
                 <div className="message-text">{msg.text}</div>
                 <div className="message-meta">
                   <span>Anonymous</span>
-                  <span>{formatDate(msg.timestamp)}</span>
+                
                 </div>
               </div>
             ))
@@ -150,7 +150,7 @@ function App() {
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message here... Be honest, be kind."
+              placeholder="Type your message here...."
               maxLength={1000}
             />
             <div className="char-count">
