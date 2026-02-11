@@ -316,6 +316,7 @@
         .admin-view {
             margin-top: 60px;
             animation: fadeInUp 0.8s ease;
+    
         }
 
         .admin-header {
@@ -323,6 +324,7 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 24px;
+
         }
 
         .admin-header h2 {
@@ -410,3 +412,4 @@
                 padding: 20px;
             }
         }
+        
