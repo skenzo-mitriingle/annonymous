@@ -437,34 +437,33 @@ textarea:focus {
     }
 }
 
-
-.neon-title {
-  font-size: 56px;
+.neon-title{
+  position: relative;
+  display: inline-block;
   font-weight: 900;
   color: #7df9ff;
-  position: relative;
+  text-shadow: 0 0 6px rgba(0,255,255,.65), 0 0 18px rgba(0,255,255,.45);
   overflow: hidden;
 }
 
-/* moving neon sweep */
-.neon-title::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 150%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(55, 102, 102, 0.8),
-    transparent
+/* moving neon sweep (mobile-safe) */
+.neon-title::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform: translateX(-120%);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,255,255,.55) 45%,
+    rgba(0,255,255,.85) 50%,
+    rgba(0,255,255,.55) 55%,
+    transparent 100%
   );
-  filter: blur(8px);
-  animation: neonSweep 3s linear infinite;
+  mix-blend-mode: screen;
+  animation: neonSweep 2.6s linear infinite;
+  pointer-events: none;
 }
 
-@keyframes neonSweep {
-  0% { left: -150%; }
-  100% { left: 150%; }
+@keyframes neonSweep{
+  to { transform: translateX(120%); }
 }
