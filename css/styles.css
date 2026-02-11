@@ -398,7 +398,7 @@ textarea:focus {
     padding: 0;              /* not 80px */
     white-space: pre-wrap;   /* keeps user line breaks */
     word-break: break-word;
-    margin-bottom: 60%;
+    margin-bottom: 40%;
 }
 
 .message-meta {
