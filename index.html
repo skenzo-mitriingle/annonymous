@@ -48,6 +48,8 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   // --- Admin auth + load messages ---
   useEffect(() => {
@@ -110,23 +112,28 @@ function App() {
   }, []);
 
   // --- Send message (public) ---
+ 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (message.trim().length === 0) return;
+  e.preventDefault();
+  if (message.trim().length === 0) return;
 
-    try {
-      await db.collection("messages").add({
-        text: message,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  try {
+    setIsLoading(true);
 
-      setMessage('');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } catch (err) {
-      alert("Failed to send: " + err.message);
-    }
-  };
+    await db.collection("messages").add({
+      text: message,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    setMessage('');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  } catch (err) {
+    alert("Failed to send: " + err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleAdminLogout = async () => {
     try {
@@ -240,13 +247,15 @@ function App() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="btn"
-            disabled={message.trim().length === 0}
-          >
-            Send Message
-          </button>
+          <button 
+                                type="submit" 
+                                className={`btn ${isLoading ? 'loading' : ''}`}
+                                disabled={message.trim().length === 0 || isLoading}
+                            >
+                                <span>{isLoading ? 'Sending...' : 'Send Message'}</span>
+                            </button>
+
+          
         </form>
 
         {showSuccess && (
