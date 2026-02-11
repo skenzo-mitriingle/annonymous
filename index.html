@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Messages</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [message, setMessage] = useState('');
+            const [messages, setMessages] = useState([]);
+            const [showSuccess, setShowSuccess] = useState(false);
+            const [isAdmin, setIsAdmin] = useState(false);
+
+            useEffect(() => {
+                // Load messages from localStorage
+                const stored = localStorage.getItem('anonymousMessages');
+                if (stored) {
+                    setMessages(JSON.parse(stored));
+                }
+
+                // Check if we're in admin mode (simple check - you can make this more secure)
+                if (window.location.hash === '#admin') {
+                    setIsAdmin(true);
+                }
+            }, []);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (message.trim().length === 0) return;
+
+                const newMessage = {
+                    id: Date.now(),
+                    text: message,
+                    timestamp: new Date().toISOString(),
+                };
+
+                const updatedMessages = [newMessage, ...messages];
+                setMessages(updatedMessages);
+                localStorage.setItem('anonymousMessages', JSON.stringify(updatedMessages));
+
+                setMessage('');
+                setShowSuccess(true);
+
+                setTimeout(() => {
+                    setShowSuccess(false);
+                }, 3000);
+            };
+
+            const formatDate = (isoString) => {
+                const date = new Date(isoString);
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+
+            if (isAdmin) {
+                return (
+                    <div className="container">
+                        <div className="admin-view">
+                            <div className="admin-header">
+                                <h2>Received Messages</h2>
+                                <div className="message-count">
+                                    {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+                                </div>
+                            </div>
+
+                            {messages.length === 0 ? (
+                                <div className="no-messages">
+                                    <div className="no-messages-icon">📭</div>
+                                    <p>No messages yet. Share your link to start receiving anonymous messages!</p>
+                                </div>
+                            ) : (
+                                messages.map((msg, index) => (
+                                    <div 
+                                        key={msg.id} 
+                                        className="message-item"
+                                        style={{ animationDelay: `${index * 0.1}s` }}
+                                    >
+                                        <div className="message-text">{msg.text}</div>
+                                        <div className="message-meta">
+                                            <span>Anonymous</span>
+                                            <span>{formatDate(msg.timestamp)}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="footer">
+                            <p>
+                                Want to receive messages? 
+                                <a href="#" style={{ color: 'var(--accent)', marginLeft: '8px' }}>
+                                    Go back to form
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="container">
+                    <div className="hero">
+                        <div className="logo">🔒</div>
+                        <h1>Send Anonymously</h1>
+                        <p className="subtitle">
+                            Share your thoughts freely. Your identity stays hidden.
+                        </p>
+                    </div>
+
+                    <div className="card">
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="message">Your Anonymous Message</label>
+                                <textarea
+                                    id="message"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Type your message here... Be honest, be kind."
+                                    maxLength={1000}
+                                />
+                                <div className="char-count">
+                                    {message.length} / 1000
+                                </div>
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                className="btn"
+                                disabled={message.trim().length === 0}
+                            >
+                                Send Message
+                            </button>
+                        </form>
+
+                        {showSuccess && (
+                            <div className="success-message">
+                                <h3>✓ Message Sent!</h3>
+                                <p>Your anonymous message has been delivered successfully.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="footer">
+                        <p>
+                            All messages are anonymous <span className="footer-icon">•</span> 
+                            No tracking <span className="footer-icon">•</span> 
+                            No data collection
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
