@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Anonymous Messages</title>
 
-<!-- Firebase -->
+<!-- Firebase (Compat - use ONE style) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <!-- React -->
@@ -34,6 +35,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 </script>
 
 <script type="text/babel">
@@ -44,35 +46,97 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminUser, setAdminUser] = useState(null);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
+  // --- Admin auth + load messages ---
   useEffect(() => {
-    if (window.location.hash === '#admin') {
-      setIsAdmin(true);
+    const adminMode = window.location.hash === '#admin';
+    if (!adminMode) return;
 
-      db.collection("messages")
+    setIsAdmin(true);
+
+    // Listen to auth changes
+    const unsubAuth = auth.onAuthStateChanged((user) => {
+      setAdminUser(user || null);
+
+      if (!user) {
+        // Not logged in -> show login prompt
+        const email = prompt("Admin email:");
+        const password = prompt("Admin password:");
+
+        if (!email || !password) {
+          alert("Login cancelled. Going back to form.");
+          window.location.hash = "";
+          setIsAdmin(false);
+          return;
+        }
+
+        auth.signInWithEmailAndPassword(email, password)
+          .catch((err) => {
+            alert("Login failed: " + err.message);
+            window.location.hash = "";
+            setIsAdmin(false);
+          });
+
+        return;
+      }
+
+      // Logged in -> read messages
+      setLoadingMessages(true);
+
+      const unsubSnap = db.collection("messages")
         .orderBy("timestamp", "desc")
-        .onSnapshot(snapshot => {
-          const msgs = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setMessages(msgs);
-        });
-    }
+        .onSnapshot(
+          (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setMessages(msgs);
+            setLoadingMessages(false);
+          },
+          (error) => {
+            setLoadingMessages(false);
+            alert("Cannot read messages: " + error.message);
+          }
+        );
+
+      // Cleanup firestore listener when auth changes / unmount
+      return () => unsubSnap();
+    });
+
+    return () => unsubAuth();
   }, []);
 
+  // --- Send message (public) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (message.trim().length === 0) return;
 
-    await db.collection("messages").add({
-      text: message,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    try {
+      await db.collection("messages").add({
+        text: message,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-    setMessage('');
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+      setMessage('');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err) {
+      alert("Failed to send: " + err.message);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await auth.signOut();
+      window.location.hash = "";
+      setIsAdmin(false);
+      setMessages([]);
+    } catch (e) {
+      alert("Logout error: " + e.message);
+    }
   };
 
   const formatDate = (timestamp) => {
@@ -87,18 +151,32 @@ function App() {
     });
   };
 
+  // --- ADMIN VIEW ---
   if (isAdmin) {
     return (
       <div className="container">
         <div className="admin-view">
-          <div className="admin-header">
-            <h2>Received Messages</h2>
-            <div className="message-count">
-              {messages.length} {messages.length === 1 ? 'message' : 'messages'}
+          <div className="admin-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"12px"}}>
+            <div>
+              <h2>Received Messages</h2>
+              <div className="message-count">
+                {loadingMessages ? "Loading..." : `${messages.length} ${messages.length === 1 ? 'message' : 'messages'}`}
+              </div>
             </div>
+
+            {adminUser && (
+              <button className="btn" onClick={handleAdminLogout} style={{width:"auto"}}>
+                Logout
+              </button>
+            )}
           </div>
 
-          {messages.length === 0 ? (
+          {loadingMessages ? (
+            <div className="no-messages">
+              <div className="no-messages-icon">⏳</div>
+              <p>Loading messages...</p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="no-messages">
               <div className="no-messages-icon">📭</div>
               <p>No messages yet. Share your link to start receiving anonymous messages!</p>
@@ -111,9 +189,9 @@ function App() {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="message-text">{msg.text}</div>
-                <div className="message-meta">
+                <div className="message-meta" style={{display:"flex",justifyContent:"space-between",gap:"10px"}}>
                   <span>Anonymous</span>
-                
+                  <span>{formatDate(msg.timestamp)}</span>
                 </div>
               </div>
             ))
@@ -132,11 +210,12 @@ function App() {
     );
   }
 
+  // --- PUBLIC VIEW ---
   return (
     <div className="container">
       <div className="hero">
         <div className="logo">🔒</div>
-        <h1>  Assoiciate finali Anonymously</h1>
+        <h1>Assoiciate finali Anonymously</h1>
         <p className="subtitle">
           Share your thoughts freely. Your identity stays hidden.
         </p>
