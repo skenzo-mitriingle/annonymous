@@ -306,7 +306,16 @@ textarea:focus {
     display: inline-block;
     margin: 0 4px;
     animation: pulse 2s ease infinite;
+    font-size: 22px;
+
 }
+.footer-icon {
+  margin: 0 8px;
+  font-size: 24px;
+  color: #00ffd5;
+  text-shadow: 0 0 6px #00ffd5;
+}
+
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -354,6 +363,7 @@ textarea:focus {
     border: 1px solid rgba(0, 217, 255, 0.1);
     border-radius: 16px;
     padding: 100px;
+    margin-top: 600px;
     margin-bottom: 600px;
     position: relative;
     animation: slideIn 0.5s ease backwards;
@@ -425,4 +435,36 @@ textarea:focus {
     .admin-view {
         max-width: 100%;
     }
+}
+
+
+.neon-title {
+  font-size: 56px;
+  font-weight: 900;
+  color: #7df9ff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* moving neon sweep */
+.neon-title::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(55, 102, 102, 0.8),
+    transparent
+  );
+  filter: blur(8px);
+  animation: neonSweep 3s linear infinite;
+}
+
+@keyframes neonSweep {
+  0% { left: -150%; }
+  100% { left: 150%; }
 }
