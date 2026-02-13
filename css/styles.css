@@ -365,6 +365,7 @@ textarea:focus {
     width: 100%;
     min-height: 80px;
     text-align: center;
+    margin-top: 500px;
 }
 
 @keyframes slideIn {
@@ -542,3 +543,15 @@ textarea:focus {
 
 
 
+
+:root{
+  --primary:#070913;
+  --secondary:#141836;
+  --surface:#0f1330;
+  --accent:#ff2bd6;
+  --success:#00ffd5;
+  --text:#f4f6ff;
+  --text-muted:#a1a7d6;
+  --accent-glow:rgba(255,43,214,.28);
+  --error:#ff4757;
+}
