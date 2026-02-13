@@ -305,7 +305,7 @@ textarea:focus {
 .footer-icon {
     display: inline-block;
     margin: 0 4px;
-    animation: pulse 2s ease infinite;
+    animation: pulse 1s ease infinite;
     font-size: 22px;
 
 }
@@ -495,3 +495,66 @@ textarea:focus {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* ===== Random floating "ANONYMOUS" particles ===== */
+.floating-words {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0; /* behind your UI */
+  overflow: hidden;
+}
+
+.floating-word {
+  position: absolute;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0;
+  user-select: none;
+  white-space: nowrap;
+
+  color: rgba(0, 217, 255, 0.28);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.25);
+
+  animation: popFloat var(--dur, 6s) ease-in-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes popFloat {
+  0% {
+    opacity: 0;
+    transform: translate(var(--xStart, 0px), var(--yStart, 0px)) scale(0.6);
+    filter: blur(1px);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(var(--xMid, 0px), var(--yMid, 0px)) scale(1);
+    filter: blur(0px);
+  }
+  85% {
+    opacity: 0.6;
+    transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-word { animation: none; opacity: 0.12; }
+}
+
+:root{
+  --primary:#070913;
+  --secondary:#141836;
+  --surface:#0f1330;
+  --accent:#ff2bd6;
+  --success:#00ffd5;
+  --text:#f4f6ff;
+  --text-muted:#a1a7d6;
+  --accent-glow:rgba(255,43,214,.28);
+  --error:#ff4757;
+}
+

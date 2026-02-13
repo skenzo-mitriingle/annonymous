@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Anonymous Messages</title>
 
-<!-- Firebase (Compat - use ONE style) -->
+<!-- Firebase (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -41,6 +41,56 @@ const auth = firebase.auth();
 <script type="text/babel">
 const { useState, useEffect } = React;
 
+function FloatingWords({ enabled = true, word = "ANONYMOUS" }) {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const makeOne = () => {
+      const id = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+      const left = Math.random() * 100;
+      const top = Math.random() * 100;
+
+      const style = {
+        left: `${left}%`,
+        top: `${top}%`,
+        fontSize: `${rand(10, 18)}px`,
+        "--dur": `${rand(4, 8)}s`,
+        "--xStart": `${rand(-40, 40)}px`,
+        "--yStart": `${rand(-40, 40)}px`,
+        "--xMid": `${rand(-120, 120)}px`,
+        "--yMid": `${rand(-120, 120)}px`,
+        "--xEnd": `${rand(-220, 220)}px`,
+        "--yEnd": `${rand(-220, 220)}px`,
+      };
+
+      setItems(prev => [{ id, text: word, style }, ...prev].slice(0, 25));
+
+      setTimeout(() => {
+        setItems(prev => prev.filter(x => x.id !== id));
+      }, 9000);
+    };
+
+    const interval = setInterval(makeOne, 900);
+    for (let i = 0; i < 6; i++) setTimeout(makeOne, i * 180);
+
+    return () => clearInterval(interval);
+  }, [enabled, word]);
+
+  return (
+    <div className="floating-words">
+      {items.map(it => (
+        <span key={it.id} className="floating-word" style={it.style}>
+          {it.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -50,7 +100,6 @@ function App() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-
   // --- Admin auth + load messages ---
   useEffect(() => {
     const adminMode = window.location.hash === '#admin';
@@ -58,12 +107,10 @@ function App() {
 
     setIsAdmin(true);
 
-    // Listen to auth changes
     const unsubAuth = auth.onAuthStateChanged((user) => {
       setAdminUser(user || null);
 
       if (!user) {
-        // Not logged in -> show login prompt
         const email = prompt("Admin email:");
         const password = prompt("Admin password:");
 
@@ -84,7 +131,6 @@ function App() {
         return;
       }
 
-      // Logged in -> read messages
       setLoadingMessages(true);
 
       const unsubSnap = db.collection("messages")
@@ -104,7 +150,6 @@ function App() {
           }
         );
 
-      // Cleanup firestore listener when auth changes / unmount
       return () => unsubSnap();
     });
 
@@ -112,28 +157,27 @@ function App() {
   }, []);
 
   // --- Send message (public) ---
- 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (message.trim().length === 0) return;
+    e.preventDefault();
+    if (message.trim().length === 0) return;
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    await db.collection("messages").add({
-      text: message,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      await db.collection("messages").add({
+        text: message,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
-    setMessage('');
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-  } catch (err) {
-    alert("Failed to send: " + err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setMessage('');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err) {
+      alert("Failed to send: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAdminLogout = async () => {
     try {
@@ -148,20 +192,26 @@ function App() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
-    const date = timestamp.toDate();
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = timestamp.toDate();
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '';
+    }
   };
 
   // --- ADMIN VIEW ---
   if (isAdmin) {
     return (
       <div className="container">
+        <FloatingWords enabled={true} word="ANONYMOUS" />
+
         <div className="admin-view">
           <div className="admin-header" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"12px"}}>
             <div>
@@ -198,7 +248,7 @@ function App() {
                 <div className="message-text">{msg.text}</div>
                 <div className="message-meta" style={{display:"flex",justifyContent:"space-between",gap:"10px"}}>
                   <span>Anonymous</span>
-      
+                  <span>{formatDate(msg.timestamp)}</span>
                 </div>
               </div>
             ))
@@ -220,15 +270,16 @@ function App() {
   // --- PUBLIC VIEW ---
   return (
     <div className="container">
+      <FloatingWords enabled={true} word="ANONYMOUS" />
+
       <div className="hero">
         <div className="logo">🔒</div>
         <div>
-         <h1 className="neon-title">Associate Wa BIS3&BIT3 Anonymous</h1>
-      
-        <p className="subtitle">
-          Share your thoughts freely. Your identity stays hidden.
-        </p>
-      </div>
+          <h1 className="neon-title">Tisakwiye Anonymous</h1>
+          <p className="subtitle">
+            Share your thoughts freely.
+          </p>
+        </div>
       </div>
 
       <div className="card">
@@ -247,15 +298,13 @@ function App() {
             </div>
           </div>
 
-          <button 
-                                type="submit" 
-                                className={`btn ${isLoading ? 'loading' : ''}`}
-                                disabled={message.trim().length === 0 || isLoading}
-                            >
-                                <span>{isLoading ? 'Sending...' : 'Send Message'}</span>
-                            </button>
-
-          
+          <button
+            type="submit"
+            className={`btn ${isLoading ? 'loading' : ''}`}
+            disabled={message.trim().length === 0 || isLoading}
+          >
+            <span>{isLoading ? 'Sending...' : 'Send Message'}</span>
+          </button>
         </form>
 
         {showSuccess && (
@@ -268,9 +317,8 @@ function App() {
 
       <div className="footer">
         <p>
-           <span className="footer-icon">•</span>
-           @skenzo Mitriingle <span className="footer-icon">•</span>
-         
+          <span className="footer-icon">•</span>
+          @skenzo Mitriingle <span className="footer-icon">•</span>
         </p>
       </div>
     </div>
