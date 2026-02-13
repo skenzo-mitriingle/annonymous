@@ -4,15 +4,16 @@
     box-sizing: border-box;
 }
 
+/* Unified color variables */
 :root {
     --primary: #0a0e27;
     --secondary: #1a1f3a;
+    --surface: #161b33;
     --accent: #00d9ff;
-    --accent-glow: rgba(0, 217, 255, 0.3);
+    --success: #00ffa3;
     --text: #e8edf4;
     --text-muted: #8892b0;
-    --surface: #161b33;
-    --success: #00ffa3;
+    --accent-glow: rgba(0, 217, 255, 0.3);
     --error: #ff4757;
 }
 
@@ -304,16 +305,11 @@ textarea:focus {
 
 .footer-icon {
     display: inline-block;
-    margin: 0 4px;
+    margin: 0 8px;
+    font-size: 24px;
+    color: #00ffd5;
+    text-shadow: 0 0 6px #00ffd5;
     animation: pulse 1s ease infinite;
-    font-size: 22px;
-
-}
-.footer-icon {
-  margin: 0 8px;
-  font-size: 24px;
-  color: #00ffd5;
-  text-shadow: 0 0 6px #00ffd5;
 }
 
 
@@ -362,13 +358,12 @@ textarea:focus {
     background: var(--surface);
     border: 1px solid rgba(0, 217, 255, 0.1);
     border-radius: 16px;
-    padding: 100px;
-    margin-top: 600px;
-    margin-bottom: 600px;
+    padding: 24px 20px;
+    margin: 24px 0;
     position: relative;
     animation: slideIn 0.5s ease backwards;
     width: 100%;
-    height: 400px;
+    min-height: 80px;
     text-align: center;
 }
 
@@ -392,13 +387,12 @@ textarea:focus {
 /* ✅ FIXED: text spacing */
 .message-text {
     color: var(--text);
-    line-height: 1.6;        /* not 20 */
-    margin-bottom: 12px;
+    line-height: 1.6;
+    margin-bottom: 16px;
     text-align: center;
-    padding: 0;              /* not 80px */
-    white-space: pre-wrap;   /* keeps user line breaks */
+    padding: 0;
+    white-space: pre-wrap;
     word-break: break-word;
-    margin-bottom: 40%;
 }
 
 .message-meta {
@@ -546,15 +540,5 @@ textarea:focus {
   .floating-word { animation: none; opacity: 0.12; }
 }
 
-:root{
-  --primary:#070913;
-  --secondary:#141836;
-  --surface:#0f1330;
-  --accent:#ff2bd6;
-  --success:#00ffd5;
-  --text:#f4f6ff;
-  --text-muted:#a1a7d6;
-  --accent-glow:rgba(255,43,214,.28);
-  --error:#ff4757;
-}
+
 
