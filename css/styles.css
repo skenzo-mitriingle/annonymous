@@ -96,30 +96,36 @@ body::after {
     }
 }
 
-.logo {
-    width: 80px;
-    height: 80px;
+.logo-wrap {
+    width: 110px;
+    height: 110px;
     margin: 0 auto 24px;
+    padding: 4px;
+    border-radius: 28px;
     background: linear-gradient(135deg, var(--accent), var(--success));
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    animation: float 3s ease-in-out infinite;
     box-shadow: 0 0 40px var(--accent-glow);
+    animation: float 3s ease-in-out infinite;
     position: relative;
 }
 
-.logo::before {
+.logo-wrap::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: 22px;
+    inset: -4px;
+    border-radius: 32px;
     background: linear-gradient(135deg, var(--accent), var(--success));
-    filter: blur(10px);
-    opacity: 0.5;
+    filter: blur(14px);
+    opacity: 0.45;
     z-index: -1;
+}
+
+.logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: 24px;
+    background: var(--secondary);
 }
 
 @keyframes float {
@@ -436,8 +442,8 @@ textarea:focus {
   position: relative;
   display: inline-block;
   font-weight: 900;
-  color: #4dd6dd;
-  text-shadow: 0 0 6px rgba(35, 51, 51, 0.65), 0 0 18px rgba(25, 58, 58, 0.45);
+  color: #2eaab0;
+  text-shadow: 0 0 6px rgba(21, 108, 166, 0.65), 0 0 18px rgba(25, 196, 196, 0.45);
   overflow: hidden;
 }
 
