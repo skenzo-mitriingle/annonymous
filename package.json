@@ -1,0 +1,7 @@
+{
+  "name": "anonymous-messages",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  }
+}
