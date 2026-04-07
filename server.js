@@ -87,7 +87,12 @@ function sendFile(res, filePath) {
     return;
   }
 
-  res.writeHead(200, { "Content-Type": getContentType(filePath) });
+  res.writeHead(200, {
+    "Content-Type": getContentType(filePath),
+    "Cache-Control": "no-store, max-age=0",
+    Pragma: "no-cache",
+    Expires: "0",
+  });
   fs.createReadStream(filePath).pipe(res);
 }
 
@@ -100,7 +105,12 @@ const server = http.createServer((req, res) => {
       FIREBASE_CONFIG: getFirebaseConfig(),
     };
 
-    res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" });
+    res.writeHead(200, {
+      "Content-Type": "application/javascript; charset=utf-8",
+      "Cache-Control": "no-store, max-age=0",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
     res.end(`window.__ENV__ = ${JSON.stringify(publicConfig, null, 2)};\n`);
     return;
   }

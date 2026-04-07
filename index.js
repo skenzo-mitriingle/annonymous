@@ -357,6 +357,7 @@ function updatePreview() {
 }
 
 function resetComposer() {
+  revokeSelectedImageUrl();
   refs.messageInput.value = "";
   refs.imageInput.value = "";
   refs.textPosition.value = "bottom";
@@ -371,7 +372,14 @@ function resetComposer() {
   updatePreview();
 }
 
+function revokeSelectedImageUrl() {
+  if (state.selectedImageDataUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(state.selectedImageDataUrl);
+  }
+}
+
 function clearSelectedImage() {
+  revokeSelectedImageUrl();
   refs.imageInput.value = "";
   state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
@@ -444,12 +452,8 @@ async function prepareSelectedImageDataUrl(file) {
   }
 }
 
-function getImageSelectionErrorMessage(file, error) {
-  if (/image\/hei[cf]/i.test(file.type)) {
-    return "This phone photo format is not supported in this browser yet. Please choose a JPG or PNG photo.";
-  }
-
-  return error.message || "Could not load the selected image.";
+function isLikelyUnsupportedMobileImage(file) {
+  return /image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
 }
 
 function estimateDataUrlBytes(dataUrl) {
@@ -1374,6 +1378,12 @@ async function handleImageSelection(event) {
     return;
   }
 
+  if (isLikelyUnsupportedMobileImage(file)) {
+    clearSelectedImage();
+    alert("This phone photo format is not supported here yet. Please choose or export the picture as JPG or PNG.");
+    return;
+  }
+
   if (state.recordedAudioDataUrl || state.isRecordingAudio || state.isPreparingAudio) {
     refs.imageInput.value = "";
     alert("Remove the voice note first. This version supports either one picture or one voice note per message.");
@@ -1387,28 +1397,29 @@ async function handleImageSelection(event) {
   }
 
   try {
-    state.isPreparingImage = true;
-    state.selectedImageName = file.name;
-    refs.imageStatus.textContent = `Preparing ${file.name} for preview...`;
-    syncSubmitState();
-
-    state.selectedImageDataUrl = await prepareSelectedImageDataUrl(file);
-    state.selectedImageName = file.name;
+    const previewUrl = URL.createObjectURL(file);
+    await loadImage(previewUrl);
+    revokeSelectedImageUrl();
     state.isPreparingImage = false;
+    state.selectedImageDataUrl = previewUrl;
+    state.selectedImageName = file.name;
     syncSubmitState();
     updatePreview();
   } catch (error) {
     clearSelectedImage();
-    alert(getImageSelectionErrorMessage(file, error));
+    alert(error.message || "Could not load the selected image.");
   }
 }
 
 function init() {
   refs.form.addEventListener("submit", handleSubmit);
-  refs.messageInput.addEventListener("input", () => {
+  const handleMessageDraftChange = () => {
     updateCharCount();
     updatePreview();
-  });
+  };
+  refs.messageInput.addEventListener("input", handleMessageDraftChange);
+  refs.messageInput.addEventListener("change", handleMessageDraftChange);
+  refs.messageInput.addEventListener("keyup", handleMessageDraftChange);
   refs.imageInput.addEventListener("change", handleImageSelection);
   refs.clearImageButton.addEventListener("click", clearSelectedImage);
   refs.startRecordingButton.addEventListener("click", startVoiceRecording);
