@@ -49,6 +49,7 @@ const state = {
   isAdminMode: false,
   isSending: false,
   isLoadingMessages: false,
+  isPreparingImage: false,
   adminUser: null,
   messages: [],
   floatingWord: "cheteee🙌",
@@ -77,6 +78,7 @@ let audioChunks = [];
 
 const MAX_AUDIO_BYTES = 350 * 1024;
 const MAX_AUDIO_RECORDING_MS = 20 * 1000;
+const MAX_IMAGE_INPUT_BYTES = 25 * 1024 * 1024;
 const MASK_STRENGTH_MIN = 20;
 const MASK_STRENGTH_MAX = 100;
 const DEFAULT_MASK_STRENGTH = 70;
@@ -193,10 +195,12 @@ function hasPendingVoiceSettingsChange() {
 function syncSubmitState() {
   refs.submitButton.disabled =
     state.isSending ||
+    state.isPreparingImage ||
     state.isRecordingAudio ||
     state.isPreparingAudio ||
     hasPendingVoiceSettingsChange() ||
     !hasComposerContent();
+  refs.submitButton.classList.toggle("is-ready", !refs.submitButton.disabled);
 }
 
 function setSubmitState(isSending) {
@@ -359,6 +363,7 @@ function resetComposer() {
   refs.textSize.value = "24";
   refs.voiceEffect.value = "anonymous";
   refs.maskStrength.value = String(DEFAULT_MASK_STRENGTH);
+  state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
   clearRecordedAudio();
@@ -368,6 +373,7 @@ function resetComposer() {
 
 function clearSelectedImage() {
   refs.imageInput.value = "";
+  state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
   syncSubmitState();
@@ -406,6 +412,44 @@ function loadImage(src) {
     image.onerror = () => reject(new Error("Could not load the selected image."));
     image.src = src;
   });
+}
+
+function drawImageToCanvas(image, maxDimension) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const canvas = document.createElement("canvas");
+
+  canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+  canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Could not prepare the image for upload.");
+  }
+
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+async function prepareSelectedImageDataUrl(file) {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await loadImage(objectUrl);
+    const previewCanvas = drawImageToCanvas(image, 1600);
+    return canvasToCompressedDataUrl(previewCanvas);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function getImageSelectionErrorMessage(file, error) {
+  if (/image\/hei[cf]/i.test(file.type)) {
+    return "This phone photo format is not supported in this browser yet. Please choose a JPG or PNG photo.";
+  }
+
+  return error.message || "Could not load the selected image.";
 }
 
 function estimateDataUrlBytes(dataUrl) {
@@ -922,21 +966,12 @@ async function buildPhotoMessageDataUrl() {
   }
 
   const image = await loadImage(state.selectedImageDataUrl);
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
-  const maxDimension = 1080;
-  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
-  const canvas = document.createElement("canvas");
-
-  canvas.width = Math.max(1, Math.round(sourceWidth * scale));
-  canvas.height = Math.max(1, Math.round(sourceHeight * scale));
-
+  const canvas = drawImageToCanvas(image, 1080);
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("Could not prepare the image for upload.");
   }
 
-  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   drawOverlayText(
     ctx,
     canvas.width,
@@ -1345,20 +1380,26 @@ async function handleImageSelection(event) {
     return;
   }
 
-  if (file.size > 10 * 1024 * 1024) {
+  if (file.size > MAX_IMAGE_INPUT_BYTES) {
     clearSelectedImage();
-    alert("Please choose an image smaller than 10 MB.");
+    alert("Please choose an image smaller than 25 MB.");
     return;
   }
 
   try {
-    state.selectedImageDataUrl = await readFileAsDataUrl(file);
+    state.isPreparingImage = true;
     state.selectedImageName = file.name;
+    refs.imageStatus.textContent = `Preparing ${file.name} for preview...`;
+    syncSubmitState();
+
+    state.selectedImageDataUrl = await prepareSelectedImageDataUrl(file);
+    state.selectedImageName = file.name;
+    state.isPreparingImage = false;
     syncSubmitState();
     updatePreview();
   } catch (error) {
     clearSelectedImage();
-    alert(error.message);
+    alert(getImageSelectionErrorMessage(file, error));
   }
 }
 
