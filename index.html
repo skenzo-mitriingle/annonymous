@@ -28,7 +28,7 @@
         />
       </div>
       <div>
-        <h1 class="neon-title">MAUFA ON THURSDAY!!!!!</h1>
+        <h1 class="neon-title">ANONYMOUS MESSAGES</h1>
         <p class="subtitle">Sibola moyo basi?</p>
       </div>
     </div>
@@ -40,9 +40,138 @@
           <textarea
             id="message"
             placeholder="Type your message here...."
-            maxLength="1000"
+            maxLength="500"
           ></textarea>
-          <div id="char-count" class="char-count">0 / 1000</div>
+          <div id="char-count" class="char-count">0 / 500</div>
+        </div>
+
+        <div class="form-group">
+          <div class="field-row">
+            <label for="image-upload">Add a Picture</label>
+            <button id="clear-image-button" type="button" class="ghost-btn" hidden>
+              Remove
+            </button>
+          </div>
+          <input
+            id="image-upload"
+            class="upload-input"
+            type="file"
+            accept="image/*"
+          />
+          <p id="image-status" class="field-note">
+            Upload a picture and your message can be written on top of it. Images are compressed before sending.
+          </p>
+        </div>
+
+        <div id="image-controls" class="image-controls" aria-disabled="true">
+          <div class="control-group">
+            <label for="text-position">Text Position</label>
+            <select id="text-position">
+              <option value="top">Top</option>
+              <option value="center">Center</option>
+              <option value="bottom" selected>Bottom</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="field-row">
+              <label for="text-size">Text Size</label>
+              <span id="text-size-value" class="control-value">24px</span>
+            </div>
+            <input
+              id="text-size"
+              type="range"
+              min="24"
+              max="56"
+              step="2"
+              value="24"
+            />
+          </div>
+        </div>
+
+        <div class="preview-shell" aria-live="polite">
+          <div class="field-row">
+            <label class="preview-label">Photo Preview</label>
+            <span class="field-note">Optional</span>
+          </div>
+
+          <div id="preview-card" class="preview-card">
+            <div id="preview-placeholder" class="preview-placeholder">
+              Upload a picture to preview your message on it.
+            </div>
+            <img
+              id="preview-image"
+              class="preview-image"
+              alt="Preview of your uploaded anonymous photo message"
+              hidden
+            />
+            <div id="preview-overlay" class="preview-overlay is-bottom" hidden></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="field-row">
+            <label>Voice Note</label>
+            <button id="clear-audio-button" type="button" class="ghost-btn" hidden>
+              Remove
+            </button>
+          </div>
+
+          <div class="voice-panel">
+            <div class="voice-effect-row">
+              <label for="voice-effect">Voice Effect</label>
+              <select id="voice-effect">
+                <option value="anonymous" selected>Anonymous</option>
+                <option value="extreme">Extreme Anonymous</option>
+                <option value="robot">Robot</option>
+                <option value="deep">Deep Voice</option>
+              </select>
+            </div>
+
+            <div class="voice-strength-row">
+              <div class="field-row">
+                <label for="mask-strength">Mask Strength</label>
+                <span id="mask-strength-value" class="control-value">70%</span>
+              </div>
+              <input
+                id="mask-strength"
+                type="range"
+                min="20"
+                max="100"
+                step="5"
+                value="70"
+              />
+            </div>
+
+            <div class="voice-actions">
+              <button
+                id="start-recording-button"
+                type="button"
+                class="voice-btn voice-icon-btn"
+                aria-label="Start recording"
+                title="Start recording"
+              >
+                <svg
+                  class="voice-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 15a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.93V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.07A7 7 0 0 1 5 12a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"
+                  />
+                </svg>
+              </button>
+              <button id="stop-recording-button" type="button" class="voice-btn is-stop" hidden>
+                Stop
+              </button>
+            </div>
+
+            <p id="voice-status" class="field-note">
+              Record a short voice note with your mic. Up to 20 seconds. The selected effect is applied before the voice note is saved.
+            </p>
+
+            <audio id="voice-preview" class="audio-preview" controls hidden></audio>
+          </div>
         </div>
 
         <button id="submit-button" type="submit" class="btn" disabled>
