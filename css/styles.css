@@ -397,15 +397,14 @@ input[type="range"] {
     z-index: 1;
     padding: 18px 20px;
     border-radius: 20px;
-    background: rgba(7, 9, 19, 0.10);
+    background: rgba(7, 9, 19, 0.04);
     color: var(--text);
     text-align: center;
     line-height: 1.4;
     font-weight: 700;
-    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
     white-space: pre-wrap;
     word-break: break-word;
-    backdrop-filter: blur(10px);
 }
 
 .preview-overlay.is-top {
@@ -698,13 +697,6 @@ input[type="range"] {
     word-break: break-word;
 }
 
-.message-text.is-secondary {
-    margin-top: 16px;
-    margin-bottom: 12px;
-    color: var(--text-muted);
-    font-size: 14px;
-}
-
 .message-media {
     overflow: hidden;
     border-radius: 14px;
@@ -787,7 +779,7 @@ input[type="range"] {
   position: relative;
   display: inline-block;
   font-weight: 900;
-  color: #0a0a0a;
+  color: #ffffff;
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.7), 0 0 18px rgba(255, 255, 255, 0.35);
   overflow: hidden;
 }
@@ -891,5 +883,3 @@ input[type="range"] {
 @media (prefers-reduced-motion: reduce) {
   .floating-word { animation: none; opacity: 0.12; }
 }
-
-

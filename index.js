@@ -75,9 +75,6 @@ let recordingTimeout = null;
 let recordingInterval = null;
 let recordingStartTime = 0;
 let audioChunks = [];
-let composerSyncInterval = null;
-let lastKnownDraftValue = "";
-let lastKnownImageSelectionKey = "";
 
 const MAX_AUDIO_BYTES = 350 * 1024;
 const MAX_AUDIO_RECORDING_MS = 20 * 1000;
@@ -85,6 +82,7 @@ const MAX_IMAGE_INPUT_BYTES = 25 * 1024 * 1024;
 const MASK_STRENGTH_MIN = 20;
 const MASK_STRENGTH_MAX = 100;
 const DEFAULT_MASK_STRENGTH = 70;
+const DEFAULT_TEXT_SIZE = 20;
 
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -134,6 +132,17 @@ function startFloatingWords() {
   for (let i = 0; i < 6; i += 1) {
     window.setTimeout(spawnFloatingWord, i * 180);
   }
+}
+
+function stopFloatingWords() {
+  if (!floatingInterval) {
+    refs.floatingWords.replaceChildren();
+    return;
+  }
+
+  window.clearInterval(floatingInterval);
+  floatingInterval = null;
+  refs.floatingWords.replaceChildren();
 }
 
 function browserSupportsVoiceRecording() {
@@ -325,7 +334,7 @@ function updateVoiceRecorderUI() {
   }
 
   refs.voiceStatus.textContent =
-    `Record a short voice note with your mic. Up to 20 seconds. ${selectedEffectLabel} at ${selectedStrength}% is selected.`;
+    `Record a voice note up to 20 seconds. ${selectedEffectLabel} at ${selectedStrength}% selected.`;
 }
 
 function updatePreview() {
@@ -343,11 +352,11 @@ function updatePreview() {
 
   if (!hasImage) {
     refs.previewImage.removeAttribute("src");
-    refs.previewPlaceholder.textContent = "Upload a picture to preview your message on it.";
+    refs.previewPlaceholder.textContent = "Add a photo and preview your message on it.";
     refs.previewOverlay.textContent = "";
     refs.previewOverlay.className = "preview-overlay is-bottom";
     refs.imageStatus.textContent =
-      "Upload a picture and your message can be written on top of it. Images are compressed before sending.";
+      "Add a photo and preview your message on it.";
     updateVoiceRecorderUI();
     return;
   }
@@ -367,14 +376,12 @@ function resetComposer() {
   refs.messageInput.value = "";
   refs.imageInput.value = "";
   refs.textPosition.value = "bottom";
-  refs.textSize.value = "24";
+  refs.textSize.value = String(DEFAULT_TEXT_SIZE);
   refs.voiceEffect.value = "anonymous";
   refs.maskStrength.value = String(DEFAULT_MASK_STRENGTH);
   state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
-  lastKnownDraftValue = "";
-  lastKnownImageSelectionKey = "";
   clearRecordedAudio();
   updateCharCount();
   updatePreview();
@@ -392,7 +399,6 @@ function clearSelectedImage() {
   state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
-  lastKnownImageSelectionKey = "";
   syncSubmitState();
   updatePreview();
 }
@@ -431,33 +437,12 @@ function loadImage(src) {
   });
 }
 
-function getSelectedImageFile() {
-  return refs.imageInput.files?.[0] || null;
-}
-
-function getFileSelectionKey(file) {
-  if (!file) {
-    return "";
-  }
-
-  return [file.name, file.size, file.lastModified, file.type].join(":");
-}
-
-async function buildPreviewImageSource(file) {
+function buildPreviewImageSource(file) {
   if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
-    const objectUrl = URL.createObjectURL(file);
-
-    try {
-      await loadImage(objectUrl);
-      return objectUrl;
-    } catch (error) {
-      URL.revokeObjectURL(objectUrl);
-    }
+    return Promise.resolve(URL.createObjectURL(file));
   }
 
-  const dataUrl = await readFileAsDataUrl(file);
-  await loadImage(dataUrl);
-  return dataUrl;
+  return readFileAsDataUrl(file);
 }
 
 function getImageSelectionErrorMessage(file, error) {
@@ -900,9 +885,9 @@ function wrapCanvasText(ctx, text, maxWidth) {
 }
 
 function getScaledFontSize(width, height, requestedSize) {
-  const baseSize = Number(requestedSize) || 24;
+  const baseSize = Number(requestedSize) || DEFAULT_TEXT_SIZE;
   const referenceSize = Math.min(width, height) / 520;
-  return Math.max(24, Math.round(baseSize * Math.max(referenceSize, 1)));
+  return Math.max(DEFAULT_TEXT_SIZE, Math.round(baseSize * Math.max(referenceSize, 1)));
 }
 
 function drawOverlayText(ctx, width, height, text, position, requestedSize) {
@@ -941,7 +926,7 @@ function drawOverlayText(ctx, width, height, text, position, requestedSize) {
   }
 
   ctx.save();
-  ctx.fillStyle = "rgba(7, 9, 19, 0.52)";
+  ctx.fillStyle = "rgba(7, 9, 19, 0.16)";
   drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, Math.round(fontSize * 0.5));
   ctx.fill();
 
@@ -949,7 +934,7 @@ function drawOverlayText(ctx, width, height, text, position, requestedSize) {
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.42)";
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.28)";
   ctx.lineWidth = Math.max(4, Math.round(fontSize * 0.16));
   ctx.fillStyle = "#f4f6ff";
 
@@ -1240,6 +1225,12 @@ function renderView() {
   refs.successMessage.hidden = true;
   setFloatingWord(state.isAdminMode ? "ANONYMOUS 👻" : "cheteee🙌");
 
+  if (state.isAdminMode || document.hidden) {
+    stopFloatingWords();
+  } else {
+    startFloatingWords();
+  }
+
   if (state.isAdminMode) {
     renderMessages();
   }
@@ -1439,55 +1430,30 @@ async function applySelectedImageFile(file) {
   updatePreview();
 }
 
-function syncMessageDraftState(force = false) {
-  const currentDraftValue = refs.messageInput.value;
-
-  if (!force && currentDraftValue === lastKnownDraftValue) {
-    return;
-  }
-
-  lastKnownDraftValue = currentDraftValue;
+function syncMessageDraftState() {
   updateCharCount();
   updatePreview();
 }
 
-async function syncSelectedImageState(force = false) {
-  const file = getSelectedImageFile();
-  const nextSelectionKey = getFileSelectionKey(file);
-
-  if (!force && nextSelectionKey === lastKnownImageSelectionKey) {
+function handleVisibilityChange() {
+  if (document.hidden) {
+    stopFloatingWords();
     return;
   }
 
-  lastKnownImageSelectionKey = nextSelectionKey;
-  await applySelectedImageFile(file);
+  startFloatingWords();
 }
 
-function startComposerSync() {
-  if (composerSyncInterval) {
-    return;
-  }
-
-  composerSyncInterval = window.setInterval(() => {
-    syncMessageDraftState();
-    syncSelectedImageState().catch(() => {});
-  }, 250);
-}
-
-function handleImageSelection() {
-  syncSelectedImageState().catch(() => {});
+function handleImageSelection(event) {
+  applySelectedImageFile(event.target.files?.[0] || null).catch(() => {});
 }
 
 function init() {
   refs.form.addEventListener("submit", handleSubmit);
-  const handleMessageDraftChange = () => syncMessageDraftState(true);
-  refs.messageInput.addEventListener("beforeinput", handleMessageDraftChange);
+  const handleMessageDraftChange = () => syncMessageDraftState();
   refs.messageInput.addEventListener("input", handleMessageDraftChange);
   refs.messageInput.addEventListener("change", handleMessageDraftChange);
-  refs.messageInput.addEventListener("keyup", handleMessageDraftChange);
-  refs.messageInput.addEventListener("paste", handleMessageDraftChange);
   refs.imageInput.addEventListener("change", handleImageSelection);
-  refs.imageInput.addEventListener("input", handleImageSelection);
   refs.clearImageButton.addEventListener("click", clearSelectedImage);
   refs.startRecordingButton.addEventListener("click", startVoiceRecording);
   refs.stopRecordingButton.addEventListener("click", stopVoiceRecording);
@@ -1508,6 +1474,7 @@ function init() {
     goToPublicView();
   });
   window.addEventListener("hashchange", handleRouteChange);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 
   refs.previewImage.addEventListener("error", () => {
     if (!state.selectedImageDataUrl) {
@@ -1519,14 +1486,9 @@ function init() {
     refs.imageStatus.textContent = "Preview failed for this image on this browser.";
   });
 
-  lastKnownDraftValue = refs.messageInput.value;
-  lastKnownImageSelectionKey = getFileSelectionKey(getSelectedImageFile());
   updateCharCount();
   updatePreview();
   updateVoiceRecorderUI();
-  renderView();
-  startFloatingWords();
-  startComposerSync();
   handleRouteChange();
 }
 

@@ -6,12 +6,14 @@
 <title>Anonymous Messages</title>
 
 <!-- Firebase (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260407-4">
+<link rel="stylesheet" href="css/styles.css?v=20260407-9">
 </head>
 
 <body>
@@ -58,7 +60,9 @@
             type="file"
             accept="image/*"
           />
-        
+          <p id="image-status" class="field-note">
+            Add a photo and preview your message on it.
+          </p>
         </div>
 
         <div id="image-controls" class="image-controls" aria-disabled="true">
@@ -79,10 +83,10 @@
             <input
               id="text-size"
               type="range"
-              min="19"
+              min="20"
               max="56"
               step="2"
-              value="19"
+              value="20"
             />
           </div>
         </div>
@@ -95,7 +99,7 @@
 
           <div id="preview-card" class="preview-card">
             <div id="preview-placeholder" class="preview-placeholder">
-              Upload a picture to preview your message on it.
+              Add a photo and preview your message on it.
             </div>
             <img
               id="preview-image"
@@ -165,7 +169,7 @@
             </div>
 
             <p id="voice-status" class="field-note">
-              Record a short voice note Up to 20 seconds. 
+              Record a voice note up to 20 seconds.
             </p>
 
             <audio id="voice-preview" class="audio-preview" controls hidden></audio>
@@ -228,9 +232,9 @@
   </section>
 </main>
 
-<script src="firebase-config.js?v=20260407-4"></script>
-<script src="env.js?v=20260407-4"></script>
-<script src="index.js?v=20260407-4"></script>
+<script defer src="firebase-config.js?v=20260407-9"></script>
+<script defer src="env.js?v=20260407-9"></script>
+<script defer src="index.js?v=20260407-9"></script>
 
 </body>
 </html>
