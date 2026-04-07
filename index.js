@@ -75,6 +75,9 @@ let recordingTimeout = null;
 let recordingInterval = null;
 let recordingStartTime = 0;
 let audioChunks = [];
+let composerSyncInterval = null;
+let lastKnownDraftValue = "";
+let lastKnownImageSelectionKey = "";
 
 const MAX_AUDIO_BYTES = 350 * 1024;
 const MAX_AUDIO_RECORDING_MS = 20 * 1000;
@@ -340,6 +343,7 @@ function updatePreview() {
 
   if (!hasImage) {
     refs.previewImage.removeAttribute("src");
+    refs.previewPlaceholder.textContent = "Upload a picture to preview your message on it.";
     refs.previewOverlay.textContent = "";
     refs.previewOverlay.className = "preview-overlay is-bottom";
     refs.imageStatus.textContent =
@@ -348,7 +352,9 @@ function updatePreview() {
     return;
   }
 
-  refs.previewImage.src = state.selectedImageDataUrl;
+  if (refs.previewImage.src !== state.selectedImageDataUrl) {
+    refs.previewImage.src = state.selectedImageDataUrl;
+  }
   refs.previewOverlay.textContent = messageText || "Your message appears here";
   refs.previewOverlay.style.fontSize = `${refs.textSize.value}px`;
   refs.previewOverlay.className = `preview-overlay is-${refs.textPosition.value}`;
@@ -367,6 +373,8 @@ function resetComposer() {
   state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
+  lastKnownDraftValue = "";
+  lastKnownImageSelectionKey = "";
   clearRecordedAudio();
   updateCharCount();
   updatePreview();
@@ -384,6 +392,7 @@ function clearSelectedImage() {
   state.isPreparingImage = false;
   state.selectedImageDataUrl = "";
   state.selectedImageName = "";
+  lastKnownImageSelectionKey = "";
   syncSubmitState();
   updatePreview();
 }
@@ -422,6 +431,43 @@ function loadImage(src) {
   });
 }
 
+function getSelectedImageFile() {
+  return refs.imageInput.files?.[0] || null;
+}
+
+function getFileSelectionKey(file) {
+  if (!file) {
+    return "";
+  }
+
+  return [file.name, file.size, file.lastModified, file.type].join(":");
+}
+
+async function buildPreviewImageSource(file) {
+  if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+      await loadImage(objectUrl);
+      return objectUrl;
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  const dataUrl = await readFileAsDataUrl(file);
+  await loadImage(dataUrl);
+  return dataUrl;
+}
+
+function getImageSelectionErrorMessage(file, error) {
+  if (/image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)) {
+    return "This phone photo format is not supported by this browser. Please use a JPG or PNG image.";
+  }
+
+  return error.message || "Could not load the selected image.";
+}
+
 function drawImageToCanvas(image, maxDimension) {
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
@@ -438,22 +484,6 @@ function drawImageToCanvas(image, maxDimension) {
 
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
   return canvas;
-}
-
-async function prepareSelectedImageDataUrl(file) {
-  const objectUrl = URL.createObjectURL(file);
-
-  try {
-    const image = await loadImage(objectUrl);
-    const previewCanvas = drawImageToCanvas(image, 1600);
-    return canvasToCompressedDataUrl(previewCanvas);
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
-function isLikelyUnsupportedMobileImage(file) {
-  return /image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
 }
 
 function estimateDataUrlBytes(dataUrl) {
@@ -1364,9 +1394,7 @@ async function handleAdminLogout() {
   }
 }
 
-async function handleImageSelection(event) {
-  const file = event.target.files?.[0];
-
+async function applySelectedImageFile(file) {
   if (!file) {
     clearSelectedImage();
     return;
@@ -1375,12 +1403,6 @@ async function handleImageSelection(event) {
   if (!file.type.startsWith("image/")) {
     clearSelectedImage();
     alert("Please choose a valid image file.");
-    return;
-  }
-
-  if (isLikelyUnsupportedMobileImage(file)) {
-    clearSelectedImage();
-    alert("This phone photo format is not supported here yet. Please choose or export the picture as JPG or PNG.");
     return;
   }
 
@@ -1397,30 +1419,75 @@ async function handleImageSelection(event) {
   }
 
   try {
-    const previewUrl = URL.createObjectURL(file);
-    await loadImage(previewUrl);
+    state.isPreparingImage = true;
+    refs.imageStatus.textContent = `Loading ${file.name}...`;
+    syncSubmitState();
+
+    const previewUrl = await buildPreviewImageSource(file);
     revokeSelectedImageUrl();
-    state.isPreparingImage = false;
     state.selectedImageDataUrl = previewUrl;
     state.selectedImageName = file.name;
-    syncSubmitState();
-    updatePreview();
   } catch (error) {
     clearSelectedImage();
-    alert(error.message || "Could not load the selected image.");
+    alert(getImageSelectionErrorMessage(file, error));
+    return;
+  } finally {
+    state.isPreparingImage = false;
   }
+
+  syncSubmitState();
+  updatePreview();
+}
+
+function syncMessageDraftState(force = false) {
+  const currentDraftValue = refs.messageInput.value;
+
+  if (!force && currentDraftValue === lastKnownDraftValue) {
+    return;
+  }
+
+  lastKnownDraftValue = currentDraftValue;
+  updateCharCount();
+  updatePreview();
+}
+
+async function syncSelectedImageState(force = false) {
+  const file = getSelectedImageFile();
+  const nextSelectionKey = getFileSelectionKey(file);
+
+  if (!force && nextSelectionKey === lastKnownImageSelectionKey) {
+    return;
+  }
+
+  lastKnownImageSelectionKey = nextSelectionKey;
+  await applySelectedImageFile(file);
+}
+
+function startComposerSync() {
+  if (composerSyncInterval) {
+    return;
+  }
+
+  composerSyncInterval = window.setInterval(() => {
+    syncMessageDraftState();
+    syncSelectedImageState().catch(() => {});
+  }, 250);
+}
+
+function handleImageSelection() {
+  syncSelectedImageState().catch(() => {});
 }
 
 function init() {
   refs.form.addEventListener("submit", handleSubmit);
-  const handleMessageDraftChange = () => {
-    updateCharCount();
-    updatePreview();
-  };
+  const handleMessageDraftChange = () => syncMessageDraftState(true);
+  refs.messageInput.addEventListener("beforeinput", handleMessageDraftChange);
   refs.messageInput.addEventListener("input", handleMessageDraftChange);
   refs.messageInput.addEventListener("change", handleMessageDraftChange);
   refs.messageInput.addEventListener("keyup", handleMessageDraftChange);
+  refs.messageInput.addEventListener("paste", handleMessageDraftChange);
   refs.imageInput.addEventListener("change", handleImageSelection);
+  refs.imageInput.addEventListener("input", handleImageSelection);
   refs.clearImageButton.addEventListener("click", clearSelectedImage);
   refs.startRecordingButton.addEventListener("click", startVoiceRecording);
   refs.stopRecordingButton.addEventListener("click", stopVoiceRecording);
@@ -1442,11 +1509,24 @@ function init() {
   });
   window.addEventListener("hashchange", handleRouteChange);
 
+  refs.previewImage.addEventListener("error", () => {
+    if (!state.selectedImageDataUrl) {
+      return;
+    }
+
+    clearSelectedImage();
+    refs.previewPlaceholder.textContent = "This picture could not be previewed on this device. Try another image.";
+    refs.imageStatus.textContent = "Preview failed for this image on this browser.";
+  });
+
+  lastKnownDraftValue = refs.messageInput.value;
+  lastKnownImageSelectionKey = getFileSelectionKey(getSelectedImageFile());
   updateCharCount();
   updatePreview();
   updateVoiceRecorderUI();
   renderView();
   startFloatingWords();
+  startComposerSync();
   handleRouteChange();
 }
 
