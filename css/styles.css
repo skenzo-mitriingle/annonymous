@@ -397,7 +397,7 @@ input[type="range"] {
     z-index: 1;
     padding: 18px 20px;
     border-radius: 20px;
-    background: rgba(7, 9, 19, 0.48);
+    background: rgba(7, 9, 19, 0.10);
     color: var(--text);
     text-align: center;
     line-height: 1.4;
@@ -787,8 +787,8 @@ input[type="range"] {
   position: relative;
   display: inline-block;
   font-weight: 900;
-  color: #2eaab0;
-  text-shadow: 0 0 6px rgba(21, 108, 166, 0.65), 0 0 18px rgba(25, 196, 196, 0.45);
+  color: #0a0a0a;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.7), 0 0 18px rgba(255, 255, 255, 0.35);
   overflow: hidden;
 }
 
@@ -800,9 +800,9 @@ input[type="range"] {
   transform: translateX(-120%);
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(0,255,255,.55) 45%,
-    rgba(0,255,255,.85) 50%,
-    rgba(0,255,255,.55) 55%,
+    rgba(255,255,255,.45) 45%,
+    rgba(255,255,255,.8) 50%,
+    rgba(255,255,255,.45) 55%,
     transparent 100%
   );
   mix-blend-mode: screen;
@@ -891,6 +891,5 @@ input[type="range"] {
 @media (prefers-reduced-motion: reduce) {
   .floating-word { animation: none; opacity: 0.12; }
 }
-
 
 

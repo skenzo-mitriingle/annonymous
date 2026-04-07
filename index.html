@@ -58,9 +58,7 @@
             type="file"
             accept="image/*"
           />
-          <p id="image-status" class="field-note">
-            Upload a picture and your message can be written on top of it. Images are compressed before sending.
-          </p>
+        
         </div>
 
         <div id="image-controls" class="image-controls" aria-disabled="true">
@@ -76,15 +74,15 @@
           <div class="control-group">
             <div class="field-row">
               <label for="text-size">Text Size</label>
-              <span id="text-size-value" class="control-value">24px</span>
+              <span id="text-size-value" class="control-value">20px</span>
             </div>
             <input
               id="text-size"
               type="range"
-              min="24"
+              min="19"
               max="56"
               step="2"
-              value="24"
+              value="19"
             />
           </div>
         </div>
@@ -167,7 +165,7 @@
             </div>
 
             <p id="voice-status" class="field-note">
-              Record a short voice note with your mic. Up to 20 seconds. The selected effect is applied before the voice note is saved.
+              Record a short voice note Up to 20 seconds. 
             </p>
 
             <audio id="voice-preview" class="audio-preview" controls hidden></audio>
