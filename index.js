@@ -1,7 +1,7 @@
-const firebaseConfig = window.__ENV__?.FIREBASE_CONFIG;
+const firebaseConfig = window.__ENV__?.FIREBASE_CONFIG || window.__STATIC_ENV__?.FIREBASE_CONFIG;
 
 if (!firebaseConfig) {
-  throw new Error("Missing Firebase config. Start the app through the local server so env vars can be loaded.");
+  throw new Error("Missing Firebase config. Add a deployed firebase config or start the app through the local server.");
 }
 
 firebase.initializeApp(firebaseConfig);
