@@ -1178,9 +1178,6 @@ function createMessageElement(message, index) {
 
   const meta = document.createElement("div");
   meta.className = "message-meta";
-  meta.style.display = "flex";
-  meta.style.justifyContent = "space-between";
-  meta.style.gap = "10px";
 
   const author = document.createElement("span");
   if (message.imageDataUrl && message.audioDataUrl) {

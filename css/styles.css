@@ -343,7 +343,7 @@ input[type="range"] {
 }
 
 .preview-shell {
-    margin-bottom: 24px;
+    margin-bottom: 148px;
 }
 
 .preview-label {
@@ -352,8 +352,8 @@ input[type="range"] {
 
 .preview-card {
     position: relative;
-    min-height: 280px;
-    margin-top: 12px;
+    min-height: 320px;
+    margin-top: 24px;
     border-radius: 22px;
     overflow: hidden;
     border: 1px solid rgba(0, 217, 255, 0.14);
@@ -614,21 +614,27 @@ input[type="range"] {
     animation: pulse 1s ease infinite;
 }
 
-
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
-/* ===== ADMIN FIXES (top centered + narrow column) ===== */
+/* ===== ADMIN MESSAGE SPACING ===== */
 .admin-view {
     margin-top: 40px;
     width: 100%;
-    max-width: 420px;   /* makes it slim like an article */
+    max-width: 760px;
     margin-left: auto;
     margin-right: auto;
 }
 
+#messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 550px;
+    padding-top: 300px;
+    padding-bottom: 120px;
+}
 
 .admin-header {
     display: flex;
@@ -658,15 +664,17 @@ input[type="range"] {
 
 .message-item {
     background: var(--surface);
-    border: 1px solid rgba(0, 217, 255, 0.1);
-    border-radius: 16px;
-    padding: 24px 20px;
-    margin: 24px 0;
+    border: 1px solid rgba(0, 217, 255, 0.14);
+    border-radius: 24px;
+     padding: 24px 20px;
     position: relative;
     animation: slideIn 0.5s ease backwards;
     width: 100%;
-    min-height: 80px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
 }
 
 @keyframes slideIn {
@@ -682,19 +690,19 @@ input[type="range"] {
 
 .message-item:hover {
     border-color: rgba(0, 217, 255, 0.3);
-    transform: translateX(4px);
+    transform: translateY(-4px);
     transition: all 0.3s ease;
 }
 
-/* ✅ FIXED: text spacing */
 .message-text {
     color: var(--text);
-    line-height: 1.6;
-    margin-bottom: 16px;
+    line-height: 1.8;
+    margin-bottom: 0;
     text-align: center;
     padding: 0;
     white-space: pre-wrap;
     word-break: break-word;
+    font-size: clamp(20px, 3vw, 34px);
 }
 
 .message-media {
@@ -702,17 +710,18 @@ input[type="range"] {
     border-radius: 14px;
     border: 1px solid rgba(0, 217, 255, 0.14);
     background: rgba(20, 24, 54, 0.7);
+    margin-bottom: 0;
 }
 
 .message-media img {
     width: 100%;
     display: block;
-    max-height: 420px;
+    max-height: min(68vh, 760px);
     object-fit: cover;
 }
 
 .message-audio {
-    margin-bottom: 16px;
+    margin-bottom: 0;
     padding: 14px;
     border-radius: 14px;
     border: 1px solid rgba(0, 217, 255, 0.14);
@@ -727,6 +736,10 @@ input[type="range"] {
     font-size: 12px;
     color: var(--text-muted);
     font-family: 'Space Mono', monospace;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .no-messages {
@@ -758,6 +771,25 @@ input[type="range"] {
         max-width: 100%;
     }
 
+    #messages-list {
+        gap: 550px;
+        padding-top: 300px;
+        padding-bottom: 80px;
+    }
+
+    .message-item {
+        padding: 28px 18px;
+        gap: 24px;
+    }
+
+    .message-text {
+        font-size: 18px;
+    }
+
+    .message-media img {
+        max-height: 62vh;
+    }
+
     .image-controls {
         grid-template-columns: 1fr;
     }
@@ -776,110 +808,112 @@ input[type="range"] {
 }
 
 .neon-title{
-  position: relative;
-  display: inline-block;
-  font-weight: 900;
-  color: #ffffff;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.7), 0 0 18px rgba(255, 255, 255, 0.35);
-  overflow: hidden;
+    position: relative;
+    display: inline-block;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.7), 0 0 18px rgba(255, 255, 255, 0.35);
+    overflow: hidden;
 }
 
 /* moving neon sweep (mobile-safe) */
 .neon-title::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  transform: translateX(-120%);
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255,255,255,.45) 45%,
-    rgba(255,255,255,.8) 50%,
-    rgba(255,255,255,.45) 55%,
-    transparent 100%
-  );
-  mix-blend-mode: screen;
-  animation: neonSweep 2.6s linear infinite;
-  pointer-events: none;
+    content:"";
+    position:absolute;
+    inset:0;
+    transform: translateX(-120%);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,.45) 45%,
+        rgba(255,255,255,.8) 50%,
+        rgba(255,255,255,.45) 55%,
+        transparent 100%
+    );
+    mix-blend-mode: screen;
+    animation: neonSweep 2.6s linear infinite;
+    pointer-events: none;
 }
 
 @keyframes neonSweep{
-  to { transform: translateX(120%); }
+    to { transform: translateX(120%); }
 }
 
 .btn.loading {
-  position: relative;
-  opacity: 0.85;
-  cursor: not-allowed;
+    position: relative;
+    opacity: 0.85;
+    cursor: not-allowed;
 }
 
 .btn.loading span {
-  padding-right: 28px;
+    padding-right: 28px;
 }
 
 .btn.loading::after {
-  content: "";
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  margin-top: -8px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.35);
-  border-top-color: rgba(255,255,255,1);
-  animation: spin 0.8s linear infinite;
+    content: "";
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: rgba(255,255,255,1);
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
+
 /* ===== Random floating "ANONYMOUS" particles ===== */
 .floating-words {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0; /* behind your UI */
-  overflow: hidden;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
 }
 
 .floating-word {
-  position: absolute;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  opacity: 0;
-  user-select: none;
-  white-space: nowrap;
-
-  color: rgba(0, 217, 255, 0.28);
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.25);
-
-  animation: popFloat var(--dur, 6s) ease-in-out forwards;
-  will-change: transform, opacity;
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0;
+    user-select: none;
+    white-space: nowrap;
+    color: rgba(0, 217, 255, 0.28);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.25);
+    animation: popFloat var(--dur, 6s) ease-in-out forwards;
+    will-change: transform, opacity;
 }
 
 @keyframes popFloat {
-  0% {
-    opacity: 0;
-    transform: translate(var(--xStart, 0px), var(--yStart, 0px)) scale(0.6);
-    filter: blur(1px);
-  }
-  12% {
-    opacity: 1;
-    transform: translate(var(--xMid, 0px), var(--yMid, 0px)) scale(1);
-    filter: blur(0px);
-  }
-  85% {
-    opacity: 0.6;
-    transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.15);
-  }
+    0% {
+        opacity: 0;
+        transform: translate(var(--xStart, 0px), var(--yStart, 0px)) scale(0.6);
+        filter: blur(1px);
+    }
+    12% {
+        opacity: 1;
+        transform: translate(var(--xMid, 0px), var(--yMid, 0px)) scale(1);
+        filter: blur(0px);
+    }
+    85% {
+        opacity: 0.6;
+        transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--xEnd, 0px), var(--yEnd, 0px)) scale(1.15);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .floating-word { animation: none; opacity: 0.12; }
+    .floating-word {
+        animation: none;
+        opacity: 0.12;
+    }
 }
